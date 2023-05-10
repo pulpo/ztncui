@@ -12,7 +12,7 @@ COPY --from=dependencies /app/src/node_modules /app/src/node_modules
 EXPOSE 3000
 RUN mv /app/src/etc/default.passwd /app/src/etc/passwd
 WORKDIR /app/src/
-ENTRYPOINT zerotier-one -d && npm start
+CMD zerotier-one -d && npm start
 
 # TODO
 # - remove cache and trash
