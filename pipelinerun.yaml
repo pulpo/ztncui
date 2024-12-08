@@ -1,0 +1,59 @@
+kind: PipelineRun
+apiVersion: tekton.dev/v1beta1
+metadata:
+  generateName: buildah-ztncui-pipeline-run-
+spec:
+  pipelineSpec:
+    workspaces:
+      - name: shared-workspace
+      - name: sslcertdir
+        optional: true
+      - name: dockerconfig-ws
+        optional: true
+    tasks:
+      - name: fetch-repository
+        taskRef:
+          name: git-clone
+        workspaces:
+          - name: output
+            workspace: shared-workspace
+        params:
+          - name: url
+            value: https://github.com/pulpo/ztncui.git 
+          - name: subdirectory
+            value: ""
+          - name: deleteExisting
+            value: "true"
+      - name: buildah
+        taskRef:
+          name: buildah
+        runAfter:
+        - fetch-repository
+        workspaces:
+        - name: source
+          workspace: shared-workspace
+        - name: dockerconfig
+          workspace: dockerconfig-ws
+        params:
+        - name: IMAGE
+          value: docker.io/iotops/ztncui
+        - name: BUILD_EXTRA_ARGS
+          value: --jobs 3 --platform linux/arm,linux/arm64,linux/amd64
+        - name: PUSH_EXTRA_ARGS
+          value: --all
+        - name: SKIP_PUSH
+          value: false 
+        - name: FORMAT
+          value: docker
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1000Mi
+    - name: dockerconfig-ws
+      secret:
+        secretName: dockerconfig-secret
